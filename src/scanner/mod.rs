@@ -26,11 +26,11 @@ enum InternalLexError {
 }
 
 impl InternalLexError {
-    fn error(line: usize, message: String) -> Self {
+    fn error(line: usize, message: &str) -> Self {
         Self::Error(LexError {
             line,
             loc: String::from(""),
-            message,
+            message: String::from(message),
         })
     }
 }
@@ -163,15 +163,67 @@ impl Scanner {
             }
             // literal
             '"' => self.consume_string_literal(),
+            d if d.is_ascii_digit() => self.consume_number_literal(),
             _ => Err(InternalLexError::error(
                 self.line,
-                format!("Unexpected character {c}"),
+                &format!("Unexpected character {c}"),
             )),
         }
     }
 
+    fn consume_number_literal(&mut self) -> Result<Token> {
+        // consume until next current is not a digit
+        while let Some(c) = self.peek()
+            && c.is_ascii_digit()
+        {
+            let _ = self.advance();
+        }
+
+        if self.peek() == Some('.') && self.peek_next().is_ok_and(|d| d.is_ascii_digit()) {
+            // consume the `.`
+            let _ = self.advance();
+        }
+
+        while let Some(c) = self.peek()
+            && c.is_ascii_digit()
+        {
+            let _ = self.advance();
+        }
+
+        self.make_token(TokenType::Number(
+            self.source[self.start..self.current]
+                .iter()
+                .collect::<String>()
+                .parse()
+                .expect(
+                    // TODO: Fix the pseudo-regex
+                    "We can only parse literals in the form d+(.d+)?, which are all valid floats",
+                ),
+        ))
+    }
+
     fn consume_string_literal(&mut self) -> Result<Token> {
-        todo!()
+        while let Some(c) = self.peek()
+            && c != '"'
+        {
+            if c == '\n' {
+                self.line += 1;
+            }
+            let _ = self.advance();
+        }
+
+        if self.is_at_end() {
+            return Err(InternalLexError::error(
+                self.line,
+                "Unterminated string literal.",
+            ));
+        }
+
+        // consume the closing "
+        let _ = self.advance();
+
+        let value = &self.source[(self.start + 1)..(self.current - 1)];
+        self.make_token(TokenType::String(value.iter().collect()))
     }
 
     fn consume_if(&mut self, expected: char) -> bool {
@@ -198,10 +250,14 @@ impl Scanner {
 
     fn make_token(&self, kind: TokenType) -> Result<Token> {
         let text = &self.source[self.start..self.current];
-        Ok(Token::new(kind, text.into_iter().collect(), self.line))
+        Ok(Token::new(kind, text.iter().collect(), self.line))
     }
 
     fn peek(&self) -> Option<char> {
         self.source.get(self.current).copied()
+    }
+
+    fn peek_next(&self) -> Option<char> {
+        self.source.get(self.current + 1).copied()
     }
 }
