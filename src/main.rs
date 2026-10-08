@@ -1,5 +1,6 @@
 use std::{fs::read_to_string, process::exit};
 
+mod parser;
 mod scanner;
 
 use scanner::Scanner;

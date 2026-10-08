@@ -1,8 +1,8 @@
 #[derive(Debug, Clone)]
 pub struct Token {
-    kind: TokenType,
-    lexeme: String,
-    line: usize,
+    pub kind: TokenType,
+    pub lexeme: String,
+    pub line: usize,
 }
 
 impl Token {
@@ -34,7 +34,7 @@ pub enum TokenType {
     Less,
     LessEqual,
 
-    Identifier(String),
+    Identifier,
     String(String),
     Number(f64),
 

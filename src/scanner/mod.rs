@@ -1,6 +1,7 @@
 pub mod token;
 
 use std::{
+    collections::HashMap,
     error::Error,
     fmt::{Display, Formatter},
 };
@@ -55,6 +56,7 @@ pub struct Scanner {
     start: usize,
     current: usize,
     line: usize,
+    keywords: HashMap<&'static str, TokenType>,
 }
 
 impl Scanner {
@@ -66,7 +68,29 @@ impl Scanner {
             start: 0,
             current: 0,
             line: 1,
+            keywords: Self::default_keywords_map(),
         }
+    }
+
+    fn default_keywords_map() -> HashMap<&'static str, TokenType> {
+        let mut m = HashMap::new();
+        m.insert("and", TokenType::And);
+        m.insert("class", TokenType::Class);
+        m.insert("else", TokenType::Else);
+        m.insert("false", TokenType::False);
+        m.insert("for", TokenType::For);
+        m.insert("fun", TokenType::Fun);
+        m.insert("if", TokenType::If);
+        m.insert("nil", TokenType::Nil);
+        m.insert("or", TokenType::Or);
+        m.insert("print", TokenType::Print);
+        m.insert("return", TokenType::Return);
+        m.insert("super", TokenType::Super);
+        m.insert("this", TokenType::This);
+        m.insert("true", TokenType::True);
+        m.insert("var", TokenType::Var);
+        m.insert("while", TokenType::While);
+        m
     }
 
     pub fn scan_tokens(&mut self) -> (Vec<Token>, Vec<LexError>) {
@@ -81,7 +105,10 @@ impl Scanner {
                     self.start = self.current;
                     self.errors.push(LexError { line, loc, message });
                 }
-                Err(InternalLexError::SkipToken) => continue,
+                Err(InternalLexError::SkipToken) => {
+                    self.start = self.current;
+                    continue;
+                }
                 Err(InternalLexError::EOF) => break,
             }
         }
@@ -146,7 +173,7 @@ impl Scanner {
                     while let Some(c) = self.peek()
                         && c != '\n'
                     {
-                        self.advance();
+                        let _ = self.advance();
                     }
                     Err(InternalLexError::SkipToken)
                 } else {
@@ -164,11 +191,30 @@ impl Scanner {
             // literal
             '"' => self.consume_string_literal(),
             d if d.is_ascii_digit() => self.consume_number_literal(),
+            c if c.is_ascii_alphabetic() || c == '_' => self.consume_identifier(),
             _ => Err(InternalLexError::error(
                 self.line,
                 &format!("Unexpected character {c}"),
             )),
         }
+    }
+
+    fn consume_identifier(&mut self) -> Result<Token> {
+        while self
+            .peek()
+            .is_some_and(|c| c.is_ascii_alphanumeric() || c == '_')
+        {
+            let _ = self.advance();
+        }
+
+        let text: String = self.source[self.start..self.current].iter().collect();
+        let kind = self
+            .keywords
+            .get(&*text)
+            .unwrap_or(&TokenType::Identifier)
+            .clone();
+
+        self.make_token(kind)
     }
 
     fn consume_number_literal(&mut self) -> Result<Token> {
@@ -179,7 +225,7 @@ impl Scanner {
             let _ = self.advance();
         }
 
-        if self.peek() == Some('.') && self.peek_next().is_ok_and(|d| d.is_ascii_digit()) {
+        if self.peek() == Some('.') && self.peek_next().is_some_and(|d| d.is_ascii_digit()) {
             // consume the `.`
             let _ = self.advance();
         }
@@ -190,16 +236,17 @@ impl Scanner {
             let _ = self.advance();
         }
 
-        self.make_token(TokenType::Number(
-            self.source[self.start..self.current]
+        self.make_token(TokenType::Number({
+            let test = self.source[self.start..self.current]
                 .iter()
-                .collect::<String>()
-                .parse()
+                .collect::<String>();
+
+            test.trim().parse()
                 .expect(
                     // TODO: Fix the pseudo-regex
-                    "We can only parse literals in the form d+(.d+)?, which are all valid floats",
-                ),
-        ))
+                    &format!("We can only parse literals in the form d+(.d+)?, which are all valid floats. got {test}"),
+                    )
+        }))
     }
 
     fn consume_string_literal(&mut self) -> Result<Token> {
@@ -250,6 +297,16 @@ impl Scanner {
 
     fn make_token(&self, kind: TokenType) -> Result<Token> {
         let text = &self.source[self.start..self.current];
+        // let start_idx = text
+        //     .iter()
+        //     .position(|c| !c.is_whitespace())
+        //     .unwrap_or(text.len());
+        // let end_idx = text
+        //     .iter()
+        //     .rposition(|c| !c.is_whitespace())
+        //     .map_or(start_idx, |i| i + 1);
+        //
+        // let lexeme: String = text[start_idx..end_idx].iter().collect();
         Ok(Token::new(kind, text.iter().collect(), self.line))
     }
 
