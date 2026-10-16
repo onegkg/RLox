@@ -50,8 +50,12 @@ impl Parser {
         }
     }
 
+    pub fn parse() -> Option<Expr> {
+        todo!()
+    }
+
     fn expression(&mut self) -> Option<Expr> {
-        return self.equality();
+        self.equality()
     }
 
     fn equality(&mut self) -> Option<Expr> {
@@ -149,14 +153,14 @@ impl Parser {
             TokenType::String(s) => Some(Expr::Literal(LoxLiteral::String(s))),
             TokenType::LeftParen => {
                 let expr = self.expression()?;
-                self.expect_next_token(TokenType::RightParen, "Expected ')' after expression.");
+                self.expect_next_token(TokenType::RightParen, "Expected ')' after expression.")?;
                 Some(Expr::Grouping {
                     expression: Box::from(expr),
                 })
             }
             _ => {
                 self.error(Some(t), "Invalid token for primary");
-                return None;
+                None
             }
         }
     }
@@ -168,20 +172,31 @@ impl Parser {
         });
     }
 
-    fn expect_next_token(&mut self, kind: TokenType, msg: &str) {}
+    fn expect_next_token(&mut self, kind: TokenType, msg: &str) -> Option<()> {
+        if let Some(t) = self.peek()
+            && t.kind == kind
+        {
+            let _ = self.advance();
+            Some(())
+        } else {
+            self.error(self.peek(), msg);
+            None
+        }
+    }
 
     fn consume_if_is(&mut self, kinds: &[TokenType]) -> bool {
         for kind in kinds {
-            if let Some(t) = self.peek() {
-                if t.kind == *kind {
-                    let _ = self.advance();
-                    return true;
-                }
+            if let Some(t) = self.peek()
+                && t.kind == *kind
+            {
+                let _ = self.advance();
+                return true;
             }
         }
         false
     }
 
+    // Equivalent to peek(); current++
     fn advance(&mut self) -> Option<Token> {
         self.current += 1;
         self.tokens.get(self.current - 1).map(|t| t.clone())
@@ -189,5 +204,28 @@ impl Parser {
 
     fn peek(&self) -> Option<Token> {
         self.tokens.get(self.current).map(|t| t.clone())
+    }
+
+    fn synchronize(&mut self) {
+        let _ = self.advance();
+        while let Some(t) = self.peek() {
+            if self.previous().kind == TokenType::Semicolon {
+                return;
+            }
+
+            match t.kind {
+                TokenType::Class => return,
+                TokenType::Fun => return,
+                TokenType::Var => return,
+                TokenType::For => return,
+                TokenType::If => return,
+                TokenType::While => return,
+                TokenType::Print => return,
+                TokenType::Return => return,
+                _ => {}
+            }
+
+            let _ = self.advance();
+        }
     }
 }
