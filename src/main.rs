@@ -5,7 +5,7 @@ mod scanner;
 
 use scanner::Scanner;
 
-use crate::scanner::LexError;
+use crate::{parser::ParseError, scanner::LexError};
 
 fn main() {
     let args: Vec<_> = std::env::args().collect();
@@ -20,11 +20,22 @@ fn main() {
 }
 
 fn report(line: usize, loc: &str, message: &str) {
+    if line == 0 {
+        eprintln!("Error{loc}: {message}");
+    }
     eprintln!("[line {line}] Error{loc}: {message}");
 }
 
 fn run_file(path: &str) {
     run(&read_to_string(path).unwrap());
+}
+
+fn report_parse_error(e: ParseError) {
+    let Some(t) = e.token else {
+        report(0, " at end of file", &e.msg);
+        return;
+    };
+    report(t.line, &format!(" at '{}'", t.lexeme), &e.msg)
 }
 
 fn run(source: &str) {

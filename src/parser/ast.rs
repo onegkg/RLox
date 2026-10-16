@@ -16,6 +16,9 @@ use crate::scanner;
 
 #[derive(Debug, Clone)]
 pub enum LoxLiteral {
+    True,
+    False,
+    Nil,
     Float(f64),
     String(String),
 }
@@ -27,6 +30,9 @@ impl Display for LoxLiteral {
                 format!("{f}")
             }
             Self::String(s) => s.clone(),
+            Self::True => format!("true"),
+            Self::False => format!("false"),
+            Self::Nil => format!("nil"),
         };
         f.write_str(&val)
     }
@@ -72,9 +78,15 @@ impl Expr {
         format!("{self}")
     }
 
-    fn parenthesize(_name: &str, _exprs: &[Expr]) -> String {
-        let sb = String::new();
-
-        todo!()
+    fn parenthesize(name: &str, exprs: &[Expr]) -> String {
+        let mut sb = String::new();
+        sb.push('(');
+        sb.push_str(name);
+        for e in exprs {
+            sb.push(' ');
+            sb.push_str(&e.print());
+        }
+        sb.push(')');
+        sb
     }
 }
