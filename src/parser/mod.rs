@@ -11,7 +11,7 @@
 
 use std::{
     error::Error,
-    fmt::{Display, Formatter, Result},
+    fmt::{self, Display, Formatter},
 };
 
 use crate::{
@@ -28,30 +28,48 @@ pub struct ParseError {
 }
 
 impl Display for ParseError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{:?} {}", self.token, self.msg)
     }
 }
 
-impl Error for ParseError {}
+#[derive(Debug, PartialEq, Clone)]
+pub struct ParseErrors(pub Vec<ParseError>);
+
+impl ParseErrors {
+    fn new() -> Self {
+        Self(Vec::new())
+    }
+}
+
+impl Display for ParseErrors {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        for err in &self.0 {
+            write!(f, "{err}")?;
+        }
+        Ok(())
+    }
+}
+
+impl Error for ParseErrors {}
 
 pub struct Parser {
     tokens: Vec<Token>,
     current: usize,
-    errors: Vec<ParseError>,
+    errors: ParseErrors,
 }
 
 impl Parser {
-    fn new(tokens: Vec<Token>) -> Self {
+    pub fn new(tokens: Vec<Token>) -> Self {
         Self {
             tokens,
             current: 0,
-            errors: Vec::new(),
+            errors: ParseErrors::new(),
         }
     }
 
-    pub fn parse() -> Option<Expr> {
-        todo!()
+    pub fn parse(&mut self) -> Result<Expr, ParseErrors> {
+        self.expression().ok_or_else(|| self.errors.clone())
     }
 
     fn expression(&mut self) -> Option<Expr> {
@@ -166,7 +184,7 @@ impl Parser {
     }
 
     fn error(&mut self, token: Option<Token>, msg: &str) {
-        self.errors.push(ParseError {
+        self.errors.0.push(ParseError {
             token,
             msg: String::from(msg),
         });

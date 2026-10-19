@@ -3,7 +3,7 @@ pub mod token;
 use std::{
     collections::HashMap,
     error::Error,
-    fmt::{Display, Formatter},
+    fmt::{self, Display, Formatter},
 };
 
 use token::Token;
@@ -18,6 +18,21 @@ pub struct LexError {
     pub loc: String,
     pub message: String,
 }
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LexErrors(pub Vec<LexError>);
+
+impl Display for LexErrors {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        for e in &self.0 {
+            // TODO: impl Display for LexError
+            write!(f, "{e:?}")?;
+        }
+        Ok(())
+    }
+}
+
+impl Error for LexErrors {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum InternalLexError {
@@ -93,7 +108,7 @@ impl Scanner {
         m
     }
 
-    pub fn scan_tokens(&mut self) -> (Vec<Token>, Vec<LexError>) {
+    pub fn scan_tokens(&mut self) -> std::result::Result<Vec<Token>, LexErrors> {
         loop {
             // if ok, push to tokens, if error, push to errors. if EOF, break
             match self.scan_token() {
@@ -114,7 +129,12 @@ impl Scanner {
         }
         self.tokens
             .push(Token::new(TokenType::EOF, String::new(), self.line));
-        (self.tokens.clone(), self.errors.clone())
+
+        if self.errors.len() != 0 {
+            Err(LexErrors(self.errors.clone()))
+        } else {
+            Ok(self.tokens.clone())
+        }
     }
 
     /// currently unused

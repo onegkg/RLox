@@ -5,7 +5,10 @@ mod scanner;
 
 use scanner::Scanner;
 
-use crate::{parser::ParseError, scanner::LexError};
+use crate::{
+    parser::{ParseError, Parser},
+    scanner::LexError,
+};
 
 fn main() {
     let args: Vec<_> = std::env::args().collect();
@@ -40,14 +43,22 @@ fn report_parse_error(e: ParseError) {
 
 fn run(source: &str) {
     let mut scanner = Scanner::new(String::from(source));
-    let (tokens, errors) = scanner.scan_tokens();
-    if errors.len() == 0 {
-        for token in tokens {
-            println!("{token:?}");
+    match scanner.scan_tokens() {
+        Ok(tokens) => {
+            let mut parser = Parser::new(tokens);
+            match parser.parse() {
+                Ok(expr) => println!("{expr}"),
+                Err(es) => {
+                    for err in es.0 {
+                        report_parse_error(err)
+                    }
+                }
+            }
         }
-    } else {
-        for LexError { line, loc, message } in errors {
-            report(line, &loc, &message);
+        Err(es) => {
+            for LexError { line, loc, message } in es.0 {
+                report(line, &loc, &message);
+            }
         }
     }
 }
