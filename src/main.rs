@@ -1,4 +1,8 @@
-use std::{fs::read_to_string, process::exit};
+use std::{
+    fs::read_to_string,
+    io::{self, Write},
+    process::exit,
+};
 
 mod parser;
 mod scanner;
@@ -67,6 +71,7 @@ fn run_prompt() {
     let mut buf = String::new();
     loop {
         print!("> ");
+        let _ = io::stdout().flush();
         let Ok(_) = std::io::stdin().read_line(&mut buf) else {
             break;
         };
