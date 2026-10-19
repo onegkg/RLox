@@ -4,6 +4,8 @@ use std::{
     process::exit,
 };
 
+mod ast;
+mod interpreter;
 mod parser;
 mod scanner;
 

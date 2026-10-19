@@ -12,7 +12,7 @@
 
 use std::fmt::{Display, Formatter};
 
-use crate::scanner;
+use crate::{interpreter::values::Value, scanner};
 
 #[derive(Debug, Clone)]
 pub enum LoxLiteral {

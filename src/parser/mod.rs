@@ -15,11 +15,9 @@ use std::{
 };
 
 use crate::{
-    parser::ast::{Expr, LoxLiteral},
+    ast::{Expr, LoxLiteral},
     scanner::token::{Token, TokenType},
 };
-
-pub mod ast;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct ParseError {
