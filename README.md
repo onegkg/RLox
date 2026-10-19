@@ -2,7 +2,7 @@
 
 An idiomatic Rust implementation of the tree-walking interpreter from *Crafting Interpreters*.
 
-RLox is currently a work in progress. Currently the lexer and AST have been implemented, but nothing more.
+RLox is currently a work in progress. Currently the lexer, a minimal AST, and a minimal Parser have been implemented, but nothing more.
 
 ## Differences From the Book
 
