@@ -19,3 +19,24 @@ impl From<LoxLiteral> for Value {
         }
     }
 }
+
+impl Value {
+    pub fn expect_bool(&self, msg: &str) -> bool {
+        let Self::Bool(b) = self else { panic!("{msg}") };
+        *b
+    }
+
+    pub fn expect_number(&self, msg: &str) -> f64 {
+        let Self::Number(n) = self else {
+            panic!("{msg}")
+        };
+        *n
+    }
+
+    pub fn expect_string(&self, msg: &str) -> &str {
+        let Self::String(s) = self else {
+            panic!("{msg}")
+        };
+        s
+    }
+}
