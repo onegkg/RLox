@@ -82,6 +82,7 @@ impl Parser {
             let right = Box::from(self.comparison()?);
             expr = Expr::Binary {
                 left: Box::from(expr),
+                token: operator.clone(),
                 operator,
                 right,
             };
@@ -110,6 +111,7 @@ impl Parser {
             let right = Box::from(self.term()?);
             expr = Expr::Binary {
                 left: Box::from(expr),
+                token: operator.clone(),
                 operator,
                 right,
             };
@@ -126,6 +128,7 @@ impl Parser {
             let right = Box::from(self.factor()?);
             expr = Expr::Binary {
                 left: Box::from(expr),
+                token: operator.clone(),
                 operator,
                 right,
             }
@@ -141,6 +144,7 @@ impl Parser {
             let right = Box::from(self.unary()?);
             expr = Expr::Binary {
                 left: Box::from(expr),
+                token: operator.clone(),
                 operator,
                 right,
             }
@@ -153,7 +157,11 @@ impl Parser {
         if self.consume_if_is(&[TokenType::Bang, TokenType::Minus]) {
             let operator = self.previous();
             let right = Box::from(self.unary()?);
-            return Some(Expr::Unary { operator, right });
+            return Some(Expr::Unary {
+                token: operator.clone(),
+                operator,
+                right,
+            });
         }
 
         self.primary()
@@ -162,16 +170,32 @@ impl Parser {
     fn primary(&mut self) -> Option<Expr> {
         let t = self.advance()?;
         match t.kind {
-            TokenType::False => Some(Expr::Literal(LoxLiteral::False)),
-            TokenType::True => Some(Expr::Literal(LoxLiteral::True)),
-            TokenType::Nil => Some(Expr::Literal(LoxLiteral::Nil)),
-            TokenType::Number(n) => Some(Expr::Literal(LoxLiteral::Float(n))),
-            TokenType::String(s) => Some(Expr::Literal(LoxLiteral::String(s))),
+            TokenType::False => Some(Expr::Literal {
+                literal: LoxLiteral::False,
+                token: t,
+            }),
+            TokenType::True => Some(Expr::Literal {
+                literal: LoxLiteral::True,
+                token: t,
+            }),
+            TokenType::Nil => Some(Expr::Literal {
+                literal: LoxLiteral::Nil,
+                token: t,
+            }),
+            TokenType::Number(n) => Some(Expr::Literal {
+                literal: LoxLiteral::Float(n),
+                token: t,
+            }),
+            TokenType::String(ref s) => Some(Expr::Literal {
+                literal: LoxLiteral::String(s.clone()),
+                token: t,
+            }),
             TokenType::LeftParen => {
                 let expr = self.expression()?;
                 self.expect_next_token(TokenType::RightParen, "Expected ')' after expression.")?;
                 Some(Expr::Grouping {
                     expression: Box::from(expr),
+                    token: t,
                 })
             }
             _ => {

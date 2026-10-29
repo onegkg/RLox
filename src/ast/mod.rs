@@ -12,7 +12,7 @@
 
 use std::fmt::{Display, Formatter};
 
-use crate::{interpreter::values::Value, scanner};
+use crate::scanner::{self, token::Token};
 
 #[derive(Debug, Clone)]
 pub enum LoxLiteral {
@@ -44,14 +44,20 @@ pub enum Expr {
         left: Box<Expr>,
         operator: scanner::token::Token,
         right: Box<Expr>,
+        token: Token,
     },
     Grouping {
         expression: Box<Expr>,
+        token: Token,
     },
-    Literal(LoxLiteral),
+    Literal {
+        literal: LoxLiteral,
+        token: Token,
+    },
     Unary {
         operator: scanner::token::Token,
         right: Box<Expr>,
+        token: Token,
     },
 }
 
@@ -62,12 +68,15 @@ impl Display for Expr {
                 left,
                 operator,
                 right,
+                ..
             } => Self::parenthesize(&operator.lexeme, &[*left, *right]),
-            Self::Grouping { expression } => Self::parenthesize("group", &[*expression]),
-            Self::Literal(lit) => {
-                format!("{}", lit)
+            Self::Grouping { expression, .. } => Self::parenthesize("group", &[*expression]),
+            Self::Literal { literal, .. } => {
+                format!("{}", literal)
             }
-            Self::Unary { operator, right } => Self::parenthesize(&operator.lexeme, &[*right]),
+            Self::Unary {
+                operator, right, ..
+            } => Self::parenthesize(&operator.lexeme, &[*right]),
         };
         f.write_str(&rep)
     }

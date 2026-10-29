@@ -1,4 +1,9 @@
-use crate::ast::LoxLiteral;
+use std::{
+    error::Error,
+    fmt::{Display, Formatter},
+};
+
+use crate::{ast::LoxLiteral, scanner::token::Token};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Value {
@@ -8,35 +13,63 @@ pub enum Value {
     String(String),
 }
 
-impl From<LoxLiteral> for Value {
-    fn from(input: LoxLiteral) -> Self {
-        match input {
-            LoxLiteral::True => Self::Bool(true),
-            LoxLiteral::False => Self::Bool(false),
-            LoxLiteral::Nil => Self::Nil,
-            LoxLiteral::Float(f) => Value::Number(f),
-            LoxLiteral::String(s) => Value::String(s),
+pub struct ValueWithTok {
+    pub value: Value,
+    pub token: Token,
+}
+
+impl ValueWithTok {
+    fn new(token: Token, value: Value) -> Self {
+        Self { token, value }
+    }
+}
+
+impl From<(LoxLiteral, Token)> for ValueWithTok {
+    fn from(input: (LoxLiteral, Token)) -> Self {
+        match input.0 {
+            LoxLiteral::True => Self::new(input.1, Value::Bool(true)),
+            LoxLiteral::False => Self::new(input.1, Value::Bool(false)),
+            LoxLiteral::Nil => Self::new(input.1, Value::Nil),
+            LoxLiteral::Float(f) => Self::new(input.1, Value::Number(f)),
+            LoxLiteral::String(s) => Self::new(input.1, Value::String(s)),
         }
     }
 }
 
-impl Value {
-    pub fn expect_bool(&self, msg: &str) -> bool {
-        let Self::Bool(b) = self else { panic!("{msg}") };
-        *b
+impl From<(Value, Token)> for ValueWithTok {
+    fn from(input: (Value, Token)) -> Self {
+        Self {
+            value: input.0,
+            token: input.1,
+        }
     }
+}
 
-    pub fn expect_number(&self, msg: &str) -> f64 {
-        let Self::Number(n) = self else {
-            panic!("{msg}")
-        };
-        *n
+impl ValueWithTok {
+    pub fn expect_number(&self, msg: &str) -> Result<f64, RuntimeError> {
+        match self.value {
+            Value::Number(n) => Ok(n),
+            _ => Err(RuntimeError::new(self.token.clone(), msg.into())),
+        }
     }
+}
 
-    pub fn expect_string(&self, msg: &str) -> &str {
-        let Self::String(s) = self else {
-            panic!("{msg}")
-        };
-        s
+#[derive(Debug, PartialEq, Clone)]
+pub struct RuntimeError {
+    token: Token,
+    msg: String,
+}
+
+impl Display for RuntimeError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}: {}", self.token.line, self.msg)
+    }
+}
+
+impl Error for RuntimeError {}
+
+impl RuntimeError {
+    fn new(token: Token, msg: String) -> Self {
+        RuntimeError { token, msg }
     }
 }
