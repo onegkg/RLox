@@ -22,6 +22,10 @@ impl ValueWithTok {
     fn new(token: Token, value: Value) -> Self {
         Self { token, value }
     }
+
+    fn stringify(&self) -> String {
+        todo!()
+    }
 }
 
 impl From<(LoxLiteral, Token)> for ValueWithTok {
@@ -69,7 +73,7 @@ impl Display for RuntimeError {
 impl Error for RuntimeError {}
 
 impl RuntimeError {
-    fn new(token: Token, msg: String) -> Self {
+    pub fn new(token: Token, msg: String) -> Self {
         RuntimeError { token, msg }
     }
 }

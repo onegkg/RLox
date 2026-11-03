@@ -12,6 +12,7 @@ mod scanner;
 use scanner::Scanner;
 
 use crate::{
+    interpreter::Interpret,
     parser::{ParseError, Parser},
     scanner::LexError,
 };
@@ -53,7 +54,7 @@ fn run(source: &str) {
         Ok(tokens) => {
             let mut parser = Parser::new(tokens);
             match parser.parse() {
-                Ok(expr) => println!("{expr}"),
+                Ok(expr) => match expr.interpret() {},
                 Err(es) => {
                     for err in es.0 {
                         report_parse_error(err)
