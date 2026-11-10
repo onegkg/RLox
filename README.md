@@ -12,6 +12,6 @@ Lexer: In JLox the lexer holds mutable state which is modified in many different
 
 AST: This is the area with the biggest change so far. In JLox, the AST is spread across many files and subclasses, and uses a visitor pattern to operate on the nodes. In RLox, the AST uses a single enum and uses a single `impl` block with a switch statement in order to achieve this same functionality.
 
-<!-- TODO: Finish comparison between our implementation and JLox; parser -->
+<!-- TODO: Write tests with insta -->
 
 

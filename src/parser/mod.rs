@@ -1,13 +1,30 @@
 //! Updated grammar for the parser:
+//! program         -> declaration* EOF ;
+//! declaration     -> varDecl
+//!                  | statement
+//!                  ;
+//! varDecl         -> "var" IDENTIFIER ( "=" expression )? ";" ;
+//! statement       -> exprStmt
+//!                  | printStmt
+//!                  ;
+//! exprStmt        -> expression ";" ;
+//! printStmt       -> "print" expression ";" ;
 //! expression      -> equality
 //! equality        -> comparison ( ( "!=" | "==" ) comparison )* ;
 //! comparison      -> term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 //! term            -> factor ( ( "-" | "+" ) factor )* ;
 //! factor          -> unary ( ( "/" | "*" ) unary)* ;
 //! unary           -> ( "!" | "-" ) unary
-//!                  | primary ;
-//! primary         -> NUMBER | STRING | "true" | "false" | "nil"
-//!                  | "(" expression ")" ;
+//!                  | primary
+//!                  ;
+//! primary         -> NUMBER
+//!                  | STRING
+//!                  | IDENTIFIER
+//!                  | "true"
+//!                  | "false"
+//!                  | "nil"
+//!                  | "(" expression ")"
+//!                  ;
 
 use std::{
     error::Error,
@@ -15,11 +32,11 @@ use std::{
 };
 
 use crate::{
-    ast::{Expr, LoxLiteral},
+    ast::{Expr, LoxLiteral, Program, Stmt},
     scanner::token::{Token, TokenType},
 };
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct ParseError {
     pub token: Option<Token>,
     pub msg: String,
@@ -31,7 +48,7 @@ impl Display for ParseError {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Default, Clone)]
 pub struct ParseErrors(pub Vec<ParseError>);
 
 impl ParseErrors {
@@ -66,8 +83,72 @@ impl Parser {
         }
     }
 
-    pub fn parse(&mut self) -> Result<Expr, ParseErrors> {
-        self.expression().ok_or_else(|| self.errors.clone())
+    pub fn parse(&mut self) -> Result<Program, ParseErrors> {
+        let mut stmts: Vec<Stmt> = Vec::new();
+        while !self.is_at_end() {
+            if let Some(stmt) = self.declaration() {
+                stmts.push(stmt);
+            }
+        }
+        if self.errors.0.len() != 0 {
+            Err(std::mem::take(&mut self.errors))
+        } else {
+            Ok(stmts)
+        }
+    }
+
+    fn declaration(&mut self) -> Option<Stmt> {
+        if self.consume_if_is(&[TokenType::Var]) {
+            return match self.var_declaration() {
+                Some(stmt) => Some(stmt),
+                None => {
+                    self.synchronize();
+                    None
+                }
+            };
+        }
+        match self.statement() {
+            Some(stmt) => Some(stmt),
+            None => {
+                self.synchronize();
+                None
+            }
+        }
+    }
+
+    fn var_declaration(&mut self) -> Option<Stmt> {
+        let name = self.expect_next_token(TokenType::Identifier, "Expect variable name.")?;
+
+        let mut initializer = None;
+        if self.consume_if_is(&[TokenType::Equal]) {
+            initializer = self.expression();
+        }
+
+        self.expect_next_token(
+            TokenType::Semicolon,
+            "Expect ';' after variable declaration.",
+        )?;
+        Some(Stmt::Var { name, initializer })
+    }
+
+    fn statement(&mut self) -> Option<Stmt> {
+        if self.consume_if_is(&[TokenType::Print]) {
+            self.print_statement()
+        } else {
+            self.expression_statement()
+        }
+    }
+
+    fn print_statement(&mut self) -> Option<Stmt> {
+        let value = self.expression()?;
+        let _ = self.expect_next_token(TokenType::Semicolon, "Expect ';' after value.")?;
+        Some(Stmt::Print(value))
+    }
+
+    fn expression_statement(&mut self) -> Option<Stmt> {
+        let value = self.expression()?;
+        let _ = self.expect_next_token(TokenType::Semicolon, "Expect ';' after expression.")?;
+        Some(Stmt::Expression(value))
     }
 
     fn expression(&mut self) -> Option<Expr> {
@@ -91,6 +172,7 @@ impl Parser {
         Some(expr)
     }
 
+    /// Returns the `Token` immediately before the current `Token`. Panics if that token is somehow out of range.
     fn previous(&self) -> Token {
         self.tokens
             .get(self.current - 1)
@@ -198,6 +280,10 @@ impl Parser {
                     token: t,
                 })
             }
+            TokenType::Identifier => Some(Expr::Variable {
+                name: self.previous(),
+            }),
+            TokenType::EOF => None,
             _ => {
                 self.error(Some(t), "Invalid token for primary");
                 None
@@ -212,12 +298,12 @@ impl Parser {
         });
     }
 
-    fn expect_next_token(&mut self, kind: TokenType, msg: &str) -> Option<()> {
+    /// Used to assert that the next token is of type `kind` in combination with the `?` operator. If the next token is of type `kind` it is returned, otherwise, an error with the message `msg` is recorded and `None` is returned, short circuiting the caller.
+    fn expect_next_token(&mut self, kind: TokenType, msg: &str) -> Option<Token> {
         if let Some(t) = self.peek()
             && t.kind == kind
         {
-            let _ = self.advance();
-            Some(())
+            self.advance()
         } else {
             self.error(self.peek(), msg);
             None
@@ -236,7 +322,7 @@ impl Parser {
         false
     }
 
-    // Equivalent to peek(); current++
+    /// Consumes the current `Token` and returns it. Returns `None` if the end of file has been reached.
     fn advance(&mut self) -> Option<Token> {
         self.current += 1;
         self.tokens.get(self.current - 1).map(|t| t.clone())
@@ -246,6 +332,7 @@ impl Parser {
         self.tokens.get(self.current).map(|t| t.clone())
     }
 
+    /// Exits panic mode by advancing the parser until the end of the statement or until a new declaration.
     fn synchronize(&mut self) {
         let _ = self.advance();
         while let Some(t) = self.peek() {
@@ -267,5 +354,9 @@ impl Parser {
 
             let _ = self.advance();
         }
+    }
+
+    fn is_at_end(&self) -> bool {
+        self.current >= self.tokens.len()
     }
 }

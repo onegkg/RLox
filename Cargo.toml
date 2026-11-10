@@ -4,9 +4,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dev-dependencies]
-libtest-mimic = "0.8.2"
-
-[[test]]
-name = "lox"
-harness = false
+insta = "1.49.0"
 

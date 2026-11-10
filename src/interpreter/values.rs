@@ -1,6 +1,6 @@
 use std::{
     error::Error,
-    fmt::{Display, Formatter},
+    fmt::{self, Display, Formatter},
 };
 
 use crate::{ast::LoxLiteral, scanner::token::Token};
@@ -13,6 +13,20 @@ pub enum Value {
     String(String),
 }
 
+impl Display for Value {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            Value::Nil => write!(f, "nil"),
+            Value::Bool(b) => write!(f, "{b}"),
+            Value::Number(n) => match n.fract() {
+                0.0 => write!(f, "{n:.0}"),
+                _ => write!(f, "{n}"),
+            },
+            Value::String(s) => write!(f, "{s}"),
+        }
+    }
+}
+
 pub struct ValueWithTok {
     pub value: Value,
     pub token: Token,
@@ -21,10 +35,6 @@ pub struct ValueWithTok {
 impl ValueWithTok {
     fn new(token: Token, value: Value) -> Self {
         Self { token, value }
-    }
-
-    fn stringify(&self) -> String {
-        todo!()
     }
 }
 
@@ -66,7 +76,7 @@ pub struct RuntimeError {
 
 impl Display for RuntimeError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}: {}", self.token.line, self.msg)
+        write!(f, "{}\n[line {}]", self.msg, self.token.line)
     }
 }
 

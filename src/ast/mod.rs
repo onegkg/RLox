@@ -39,6 +39,16 @@ impl Display for LoxLiteral {
 }
 
 #[derive(Debug, Clone)]
+pub enum Stmt {
+    Expression(Expr),
+    Print(Expr),
+    Var {
+        name: Token,
+        initializer: Option<Expr>,
+    },
+}
+
+#[derive(Debug, Clone)]
 pub enum Expr {
     Binary {
         left: Box<Expr>,
@@ -58,6 +68,9 @@ pub enum Expr {
         operator: scanner::token::Token,
         right: Box<Expr>,
         token: Token,
+    },
+    Variable {
+        name: Token,
     },
 }
 
@@ -99,3 +112,6 @@ impl Expr {
         sb
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct Program(pub Vec<Stmt>);

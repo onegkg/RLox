@@ -1,41 +1,46 @@
 use crate::{
-    ast::Expr,
-    interpreter::values::{RuntimeError, Value, ValueWithTok},
+    ast::{Expr, Program, Stmt},
+    interpreter::{
+        environment::Environment,
+        values::{RuntimeError, Value, ValueWithTok},
+    },
     scanner::token::TokenType,
 };
+pub mod environment;
 pub mod values;
 
-/// Requirement for internal interpretation of the ast
-trait InternallyInterpretable {
-    fn interpret_internal(&self) -> Result<ValueWithTok, RuntimeError>;
+pub trait Interpretable {
+    type Return;
+    fn interpret(&self, env: &mut Environment) -> Result<Self::Return, RuntimeError>;
 }
 
-/// Wraps the `interpret_internal` function with a user facing api
-pub trait Interpretable: InternallyInterpretable {
-    fn interpret(&self);
+trait Evaluatable {
+    type EvaluatesTo;
+    fn evaluate(&self, env: &Environment) -> Result<Self::EvaluatesTo, RuntimeError>;
 }
 
 impl Interpretable for Expr {
-    fn interpret(&self) {
-        match self.interpret_internal() {
-            Ok(ValueWithTok { value, .. }) => println!("{}", value.stringify()),
-            // TODO: Properly Implement Display for RuntimeError
-            Err(e) => println!("{e}"),
+    type Return = Value;
+    fn interpret(&self, env: &mut Environment) -> Result<Self::Return, RuntimeError> {
+        match self.evaluate(env) {
+            Ok(ValueWithTok { value, .. }) => Ok(value),
+            Err(e) => Err(e),
         }
     }
 }
 
-impl InternallyInterpretable for Expr {
-    fn interpret_internal(&self) -> Result<ValueWithTok, RuntimeError> {
+impl Evaluatable for Expr {
+    type EvaluatesTo = ValueWithTok;
+    fn evaluate(&self, env: &Environment) -> Result<Self::EvaluatesTo, RuntimeError> {
         match self.clone() {
             Self::Literal { literal, token } => Ok((literal, token).into()),
-            Self::Grouping { expression, .. } => expression.interpret_internal(),
+            Self::Grouping { expression, .. } => expression.evaluate(env),
             Self::Unary {
                 operator,
                 right,
                 token,
             } => {
-                let right = right.interpret_internal()?;
+                let right = right.evaluate(env)?;
                 match operator.kind {
                     TokenType::Minus => {
                         let n = right
@@ -52,8 +57,8 @@ impl InternallyInterpretable for Expr {
                 right,
                 token,
             } => {
-                let left = left.interpret_internal()?;
-                let right = right.interpret_internal()?;
+                let left = left.evaluate(env)?;
+                let right = right.evaluate(env)?;
                 match operator.kind {
                     TokenType::Minus => match (left.value, right.value) {
                         (Value::Number(left), Value::Number(right)) => {
@@ -65,6 +70,10 @@ impl InternallyInterpretable for Expr {
                         )),
                     },
                     TokenType::Slash => match (left.value, right.value) {
+                        (Value::Number(_), Value::Number(0.)) => Err(RuntimeError::new(
+                            token,
+                            "Runtime Error: Attempted division by zero".into(),
+                        )),
                         (Value::Number(left), Value::Number(right)) => {
                             Ok((Value::Number(left / right), token).into())
                         }
@@ -131,6 +140,10 @@ impl InternallyInterpretable for Expr {
                         (Value::String(left), Value::String(right)) => {
                             Ok((Value::String(left + &right), token).into())
                         }
+                        // I think implicit conversions are annoying and would prefer not to support them
+                        // (Value::String(left), v) => {
+                        //     Ok((Value::String(left + &format!("{v}")), token).into())
+                        // }
                         _ => Err(RuntimeError::new(
                             token,
                             "Runtime Error: Can only add strings or numbers".into(),
@@ -143,6 +156,35 @@ impl InternallyInterpretable for Expr {
                 }
             }
         }
+    }
+}
+
+impl Interpretable for Stmt {
+    type Return = ();
+    fn interpret(&self, env: &mut Environment) -> Result<(), RuntimeError> {
+        match self {
+            // evaluates the expression for side effects then discards result
+            Stmt::Expression(e) => {
+                e.evaluate(env)?;
+                Ok(())
+            }
+            // evaluates the expression then prints the result
+            Stmt::Print(e) => {
+                let ValueWithTok { value, .. } = e.evaluate(env)?;
+                println!("{value}");
+                Ok(())
+            }
+        }
+    }
+}
+
+impl Interpretable for Program {
+    type Return = ();
+    fn interpret(&self, env: &mut Environment) -> Result<(), RuntimeError> {
+        for stmt in &self.0 {
+            stmt.interpret(env)?;
+        }
+        Ok(())
     }
 }
 
