@@ -1,0 +1,15 @@
+min_version = "2026.10.17"
+
+[tools]
+rust = "latest"
+"cabal" = "latest"
+"ghcup" = "latest"
+"mise-ghcup:ghc" = "latest"
+"mise-ghcup:hls" = "latest"
+
+[settings]
+experimental = true
+
+[plugins]
+"vfox-backend:mise-ghcup" = "packslip:wasp-lang/mise-ghcup#3.0.0"
+"vfox-backend:mise-cabal" = "packslip:wasp-lang/mise-cabal#2.0.0"
