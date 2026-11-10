@@ -13,3 +13,16 @@ experimental = true
 [plugins]
 "vfox-backend:mise-ghcup" = "packslip:wasp-lang/mise-ghcup#3.0.0"
 "vfox-backend:mise-cabal" = "packslip:wasp-lang/mise-cabal#2.0.0"
+
+[tasks.run]
+description = "run the project"
+run = "cargo run"
+
+[tasks.check]
+description = "run lints with clippy"
+run = "cargo clippy"
+
+[tasks.test]
+description = "run tests with the custom Haskell test runner"
+run = "runghc test.hs ./test"
+
