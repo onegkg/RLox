@@ -55,7 +55,7 @@ fn run(source: &str, env: &mut Environment) -> i32 {
         Ok(tokens) => {
             let mut parser = Parser::new(tokens);
             match parser.parse() {
-                Ok(stmts) => match stmts.interpret() {
+                Ok(stmts) => match stmts.interpret(env) {
                     Ok(_) => 0,
                     Err(e) => {
                         report_runtime_error(e);

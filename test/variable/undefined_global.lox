@@ -1,2 +1,2 @@
-// UNIMPLEMENTED
+// UNIMPLEMENTED: Variables
 print notDefined;  // expect runtime error: Undefined variable 'notDefined'.

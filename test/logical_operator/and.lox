@@ -1,4 +1,4 @@
-// UNIMPLEMENETED
+// UNIMPLEMENTED: And
 // Note: These tests implicitly depend on ints being truthy.
 
 // Return the first non-true argument.

@@ -1,4 +1,4 @@
-// UNIMPLEMENTED
+// UNIMPLEMENTED: Classes
 class Foo {
   init(arg) {
     print "Foo.init(" + arg + ")";

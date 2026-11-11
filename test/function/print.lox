@@ -1,4 +1,4 @@
-// UNIMPLEMENTED
+// UNIMPLEMENTED: Functions
 fun foo() {}
 print foo; // expect: <fn foo>
 

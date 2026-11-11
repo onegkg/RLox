@@ -1,4 +1,4 @@
-// UNIMPLEMENTED
+// UNIMPLEMENTED: Variables; Classes
 var foo = "variable";
 
 class Foo {

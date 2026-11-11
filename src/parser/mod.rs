@@ -93,7 +93,7 @@ impl Parser {
         if self.errors.0.len() != 0 {
             Err(std::mem::take(&mut self.errors))
         } else {
-            Ok(stmts)
+            Ok(Program::from(stmts))
         }
     }
 
@@ -117,7 +117,7 @@ impl Parser {
     }
 
     fn var_declaration(&mut self) -> Option<Stmt> {
-        let name = self.expect_next_token(TokenType::Identifier, "Expect variable name.")?;
+        let name = self.expect_next_token(TokenType::Identifier, "Expected variable name.")?;
 
         let mut initializer = None;
         if self.consume_if_is(&[TokenType::Equal]) {
@@ -126,7 +126,7 @@ impl Parser {
 
         self.expect_next_token(
             TokenType::Semicolon,
-            "Expect ';' after variable declaration.",
+            "Expected `;` after variable declaration.",
         )?;
         Some(Stmt::Var { name, initializer })
     }
@@ -141,13 +141,13 @@ impl Parser {
 
     fn print_statement(&mut self) -> Option<Stmt> {
         let value = self.expression()?;
-        let _ = self.expect_next_token(TokenType::Semicolon, "Expect ';' after value.")?;
+        let _ = self.expect_next_token(TokenType::Semicolon, "Expected `;` after value.")?;
         Some(Stmt::Print(value))
     }
 
     fn expression_statement(&mut self) -> Option<Stmt> {
         let value = self.expression()?;
-        let _ = self.expect_next_token(TokenType::Semicolon, "Expect ';' after expression.")?;
+        let _ = self.expect_next_token(TokenType::Semicolon, "Expected `;` after expression.")?;
         Some(Stmt::Expression(value))
     }
 
@@ -274,7 +274,7 @@ impl Parser {
             }),
             TokenType::LeftParen => {
                 let expr = self.expression()?;
-                self.expect_next_token(TokenType::RightParen, "Expected ')' after expression.")?;
+                self.expect_next_token(TokenType::RightParen, "Expected `)` after expression.")?;
                 Some(Expr::Grouping {
                     expression: Box::from(expr),
                     token: t,
@@ -285,7 +285,7 @@ impl Parser {
             }),
             TokenType::EOF => None,
             _ => {
-                self.error(Some(t), "Invalid token for primary");
+                self.error(Some(t), "Expected expression");
                 None
             }
         }

@@ -1,4 +1,4 @@
-// UNIMPLEMENTED
+// UNIMPLEMENTED: Classes; Inheritance
 class A {
   init(param) {
     this.field = param;

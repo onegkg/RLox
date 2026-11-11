@@ -1,4 +1,4 @@
-// UNIMPLEMENTED
+// UNIMPLEMENTED: Closures
 {
   var local = "local";
   fun f() {

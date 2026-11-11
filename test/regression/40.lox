@@ -1,4 +1,4 @@
-// UNIMPLEMENTED
+// UNIMPLEMENTED: Functions; Closures
 fun caller(g) {
   g();
   // g should be a function, not nil.

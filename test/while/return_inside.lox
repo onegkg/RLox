@@ -1,4 +1,4 @@
-// UNIMPLEMENTED
+// UNIMPLEMENTED: Functions; While
 fun f() {
   while (true) {
     var i = "i";

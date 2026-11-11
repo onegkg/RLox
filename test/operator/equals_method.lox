@@ -1,4 +1,4 @@
-// UNIMPLEMENTED
+// UNIMPLEMENTED: Classes
 // Bound methods have identity equality.
 class Foo {
   method() {}

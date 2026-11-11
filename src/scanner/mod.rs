@@ -214,7 +214,7 @@ impl Scanner {
             c if c.is_ascii_alphabetic() || c == '_' => self.consume_identifier(),
             _ => Err(InternalLexError::error(
                 self.line,
-                &format!("Unexpected character {c}"),
+                &format!("Unexpected character `{c}`"),
             )),
         }
     }

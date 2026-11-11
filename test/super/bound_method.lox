@@ -1,4 +1,4 @@
-// UNIMPLEMENTED
+// UNIMPLEMENTED: Classes; Inheritance; Methods; Closures
 class A {
   method(arg) {
     print "A.method(" + arg + ")";

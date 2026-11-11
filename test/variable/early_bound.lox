@@ -1,4 +1,4 @@
-// UNIMPLEMENTED
+// UNIMPLEMENTED: Functions
 var a = "outer";
 {
   fun foo() {

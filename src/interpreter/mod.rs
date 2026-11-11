@@ -35,6 +35,7 @@ impl Evaluatable for Expr {
         match self.clone() {
             Self::Literal { literal, token } => Ok((literal, token).into()),
             Self::Grouping { expression, .. } => expression.evaluate(env),
+            Self::Variable { name } => Ok((env.get(name.clone())?, name).into()),
             Self::Unary {
                 operator,
                 right,
@@ -146,7 +147,7 @@ impl Evaluatable for Expr {
                         // }
                         _ => Err(RuntimeError::new(
                             token,
-                            "Runtime Error: Can only add strings or numbers".into(),
+                            "Runtime Error: Can only add two strings or two numbers".into(),
                         )),
                     },
                     _ => Err(RuntimeError::new(
@@ -172,6 +173,14 @@ impl Interpretable for Stmt {
             Stmt::Print(e) => {
                 let ValueWithTok { value, .. } = e.evaluate(env)?;
                 println!("{value}");
+                Ok(())
+            }
+            Stmt::Var { name, initializer } => {
+                let mut val = Value::Nil;
+                if let Some(i) = initializer {
+                    val = i.interpret(env)?
+                }
+                env.define(name.lexeme.clone(), val);
                 Ok(())
             }
         }

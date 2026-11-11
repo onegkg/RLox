@@ -1,3 +1,3 @@
-// UNIMPLEMENTED
+// UNIMPLEMENTED: Classes
 class Foo {}
 Foo.bar; // expect runtime error: Only instances have properties.

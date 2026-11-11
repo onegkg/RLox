@@ -1,4 +1,4 @@
-// UNIMPLEMENTED
+// UNIMPLEMENTED: Classes; Methods
 class Foo {
   method() { }
 }

@@ -1,4 +1,4 @@
-// UNIMPLEMENTED
+// UNIMPLEMENTED: Functions; Ifs
 fun f() {
   if (true) return "ok";
 }

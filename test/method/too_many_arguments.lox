@@ -1,4 +1,4 @@
-// UNIMPLEMENTED
+// UNIMPLEMENTED: Methods
 {
   var a = 1;
   true.method(

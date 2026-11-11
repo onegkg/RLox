@@ -87,6 +87,7 @@ impl Display for Expr {
             Self::Literal { literal, .. } => {
                 format!("{}", literal)
             }
+            Self::Variable { name } => format!("{:?}", name),
             Self::Unary {
                 operator, right, ..
             } => Self::parenthesize(&operator.lexeme, &[*right]),
@@ -115,3 +116,9 @@ impl Expr {
 
 #[derive(Debug, Clone)]
 pub struct Program(pub Vec<Stmt>);
+
+impl From<Vec<Stmt>> for Program {
+    fn from(input: Vec<Stmt>) -> Self {
+        Self(input)
+    }
+}

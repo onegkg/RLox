@@ -1,4 +1,4 @@
-// UNIMPLEMENTED
+// UNIMPLEMENTED: And
 // False and nil are false.
 print false and "bad"; // expect: false
 print nil and "bad"; // expect: nil

@@ -1,4 +1,4 @@
-// UNIMPLEMENTED
+// UNIMPLEMENTED: Classes
 class Foo {}
 
 fun bar(a, b) {

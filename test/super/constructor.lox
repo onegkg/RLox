@@ -1,4 +1,4 @@
-// UNIMPLEMENTED
+// UNIMPLEMENTED: Classes; Inheritance
 class Base {
   init(a, b) {
     print "Base.init(" + a + ", " + b + ")";

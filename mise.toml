@@ -22,7 +22,12 @@ run = "cargo run"
 description = "run lints with clippy"
 run = "cargo clippy"
 
+[tasks.build]
+description = "build with cargo"
+run = "cargo build"
+
 [tasks.test]
+depends = ["build"]
 description = "run tests with the custom Haskell test runner"
-run = "runghc test.hs ./test"
+run = "./test.hs ./test"
 

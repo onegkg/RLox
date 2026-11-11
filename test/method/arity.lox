@@ -1,4 +1,4 @@
-// UNIMPLEMENTED
+// UNIMPLEMENTED: Classes; Methods 
 class Foo {
   method0() { return "no args"; }
   method1(a) { return a; }

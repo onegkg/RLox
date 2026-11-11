@@ -1,4 +1,4 @@
-// UNIMPLEMENTED
+// UNIMPLEMENTED: Classe Inheritance
 class A {}
 
 fun f() {

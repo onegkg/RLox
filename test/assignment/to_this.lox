@@ -1,4 +1,4 @@
-// UNIMPLEMENTED
+// UNIMPLEMENTED: Variables; Classes
 class Foo {
   Foo() {
     this = "value"; // Error at '=': Invalid assignment target.

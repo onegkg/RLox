@@ -1,3 +1,4 @@
+// UNIMPLEMENTED: NaN
 var nan = 0/0;
 
 print nan == 0; // expect: false

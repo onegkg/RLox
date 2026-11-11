@@ -1,4 +1,4 @@
-// UNIMPLEMENTED
+// UNIMPLEMENTED: Classes; Inheritance
 class Foo {
   methodOnFoo() { print "foo"; }
   override() { print "foo"; }

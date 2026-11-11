@@ -1,4 +1,4 @@
-// UNIMPLEMENTED
+// UNIMPLEMENTED: Classes; Inheritance
 class Base {
   foo() {
     print "Base.foo()";

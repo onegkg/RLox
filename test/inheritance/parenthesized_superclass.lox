@@ -1,4 +1,4 @@
-// UNIMPLEMENTED
+// UNIMPLEMENTED: Classes; Inheritance
 class Foo {}
 
 // [line 4] Error at '(': Expect superclass name.

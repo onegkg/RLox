@@ -1,4 +1,4 @@
-// UNIMPLEMENTED
+// UNIMPLEMENTED: Functions; For
 fun f() {
   for (;;) {
     var i = "i";
