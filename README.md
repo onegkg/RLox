@@ -2,16 +2,17 @@
 
 An idiomatic Rust implementation of the tree-walking interpreter from [*Crafting Interpreters*](https://craftinginterpreters.com/).
 
-RLox is currently a work in progress. Currently the lexer, a minimal AST, a minimal Parser, and a minimal interpreter have been implemented, but nothing more.
+RLox is currently a work in progress. I have so far implemented a lexer, parser, and interpreter capable of interpreting basic expressions.
+
+I've also implemented a custom test runner to run my interpreter against a variation of the official Lox test suite.
 
 ## Differences From the Book
 
 While RLox mostly follows the Java implementation of Lox in the book, it has a couple of architectural differences to bring it more in line with Rust idioms. These differences and the rationale behind them are listed below.
 
-In JLox the lexer holds mutable state which is modified in many different places, errors are also reported in this decentralized manner. In RLox, each function which would in JLox modify the error flag or tokens vector instead returns a Result<Token, Error> which gets bubbled up and handled by the main `scan_tokens` function. Tokens are also slightly restructured. The TokenType variants that represent literals now hold their literal value. This is necessary because Rust doesn't have an equivalent of Java's `Object` type, and honestly `Object` is far too broad for storing literally just a float or a String. The same pattern is used throughout the parser and interpreter.
+Error Handling: In JLox, errors are primarily modeled as exceptions. A function which encounters an error throws it as an exception, and it unwinds the call stack until it reaches a catch block. This is exactly the pattern you want in an interpreter, but it makes it difficult to reason about which functions can error and where the errors are caught when they're thrown. In RLox, I leverage Rust's robust `Option` and `Result` types in combination with the `?` operator to provide similar call stack unwinding functionality, while explicitly marking which parts of the code can error and making it much easier to trace an error's path through the call stack to its eventual handling.
 
-In JLox, the AST is spread across many files and subclasses, and uses a visitor pattern to operate on the nodes. In RLox, the AST uses a single enum which implements a trait for each "visitor" in the original implementation.
-
+AST: In JLox, the AST is spread across many files, repeating enough work that the author decided it would be worth writing an additional script to generate them. RLox forgoes this script entirely and instead models the AST as a couple of sum types, and forgoes the visitor classes used by JLox in favor of Rust traits.
 
 ## Testing
 
