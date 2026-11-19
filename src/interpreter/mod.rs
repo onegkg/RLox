@@ -11,17 +11,17 @@ pub mod values;
 
 pub trait Interpretable {
     type Return;
-    fn interpret(&self, env: &mut Environment) -> Result<Self::Return, RuntimeError>;
+    fn interpret(self, env: &mut Environment) -> Result<Self::Return, RuntimeError>;
 }
 
 trait Evaluatable {
     type EvaluatesTo;
-    fn evaluate(&self, env: &Environment) -> Result<Self::EvaluatesTo, RuntimeError>;
+    fn evaluate(&self, env: &mut Environment) -> Result<Self::EvaluatesTo, RuntimeError>;
 }
 
 impl Interpretable for Expr {
     type Return = Value;
-    fn interpret(&self, env: &mut Environment) -> Result<Self::Return, RuntimeError> {
+    fn interpret(self, env: &mut Environment) -> Result<Self::Return, RuntimeError> {
         match self.evaluate(env) {
             Ok(ValueWithTok { value, .. }) => Ok(value),
             Err(e) => Err(e),
@@ -31,7 +31,7 @@ impl Interpretable for Expr {
 
 impl Evaluatable for Expr {
     type EvaluatesTo = ValueWithTok;
-    fn evaluate(&self, env: &Environment) -> Result<Self::EvaluatesTo, RuntimeError> {
+    fn evaluate(&self, env: &mut Environment) -> Result<Self::EvaluatesTo, RuntimeError> {
         match self.clone() {
             Self::Literal { literal, token } => Ok((literal, token).into()),
             Self::Grouping { expression, .. } => expression.evaluate(env),
@@ -156,13 +156,18 @@ impl Evaluatable for Expr {
                     )),
                 }
             }
+            Self::Assignment { name, value } => {
+                let new_val = value.evaluate(env)?;
+                env.assign(name, new_val.value.clone())?;
+                Ok(new_val)
+            }
         }
     }
 }
 
 impl Interpretable for Stmt {
     type Return = ();
-    fn interpret(&self, env: &mut Environment) -> Result<(), RuntimeError> {
+    fn interpret(self, env: &mut Environment) -> Result<(), RuntimeError> {
         match self {
             // evaluates the expression for side effects then discards result
             Stmt::Expression(e) => {
@@ -175,11 +180,14 @@ impl Interpretable for Stmt {
                 println!("{value}");
                 Ok(())
             }
+            // Evaluates the initializer if present then assigns it to name; otherwise assigns Nil to name
             Stmt::Var { name, initializer } => {
-                let mut val = Value::Nil;
-                if let Some(i) = initializer {
-                    val = i.interpret(env)?
-                }
+                let val = if let Some(i) = initializer {
+                    i.interpret(env)?
+                } else {
+                    Value::Nil
+                };
+
                 env.define(name.lexeme.clone(), val);
                 Ok(())
             }
@@ -189,8 +197,8 @@ impl Interpretable for Stmt {
 
 impl Interpretable for Program {
     type Return = ();
-    fn interpret(&self, env: &mut Environment) -> Result<(), RuntimeError> {
-        for stmt in &self.0 {
+    fn interpret(self, env: &mut Environment) -> Result<(), RuntimeError> {
+        for stmt in self.0 {
             stmt.interpret(env)?;
         }
         Ok(())

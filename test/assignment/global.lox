@@ -1,4 +1,3 @@
-// UNIMPLEMENTED: Variables
 var a = "before";
 print a; // expect: before
 

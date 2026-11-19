@@ -1,3 +1,2 @@
-// UNIMPLEMENTED: Variables
 var a;
 print a; // expect: nil

@@ -1,15 +1,3 @@
-//! Lox Grammer:
-//! expression -> literal
-//!               | unary
-//!               | binary
-//!               | grouping ;
-//! literal    -> NUMBER | STRING | "true" | "false" | "nil" ;
-//! grouping   -> "(" expression ")" ;
-//! unary      -> ( "-" | "!" ) expression ;
-//! binary     -> expression operator expression
-//!operator    -> "==" | "!=" | "<" | "<=" | ">" | ">="
-//!               | "+" | "-" | "*" | "/" ;
-
 use std::fmt::{Display, Formatter};
 
 use crate::scanner::{self, token::Token};
@@ -72,6 +60,10 @@ pub enum Expr {
     Variable {
         name: Token,
     },
+    Assignment {
+        name: Token,
+        value: Box<Expr>,
+    },
 }
 
 impl Display for Expr {
@@ -91,6 +83,7 @@ impl Display for Expr {
             Self::Unary {
                 operator, right, ..
             } => Self::parenthesize(&operator.lexeme, &[*right]),
+            Self::Assignment { name, value } => format!("{}, {}", name.lexeme, value),
         };
         f.write_str(&rep)
     }

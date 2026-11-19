@@ -14,10 +14,12 @@ import System.IO
 import System.Process (readProcessWithExitCode)
 import Text.Printf
 
+-- TODO: Require that outputs are in correct order
+
 data Expectation
   = Output String -- "expect: "
   | RuntimeError String -- "expect runtime error: "
-  | ParseError String -- "Error at "
+  | ParseError String -- "Error at " | "Error"
 
 data Result
   = Failed
@@ -125,12 +127,16 @@ parseExpectationFromLine s = case splitOn "expect: " s !? 1 of
     Just val -> Just (RuntimeError val)
     Nothing -> case splitOn "Error: " s !? 1 of
       Just val -> Just (ParseError val)
-      Nothing -> Nothing
+      Nothing -> case splitOn "Error" s !? 1 of
+        Just val -> Just (ParseError val)
+        Nothing -> Nothing
 
 main :: IO ()
 main = do
   args <- getArgs
-  let testDir = args !! 0
+  let testDir = case args !? 0 of
+        Just d -> d
+        Nothing -> "test"
   files <- buildTestList testDir
   results <- mapM processFile files
   let (passed, failed, skipped) =

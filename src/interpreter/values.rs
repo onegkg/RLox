@@ -59,6 +59,15 @@ impl From<(Value, Token)> for ValueWithTok {
     }
 }
 
+impl From<(&Value, Token)> for ValueWithTok {
+    fn from(input: (&Value, Token)) -> Self {
+        Self {
+            value: input.0.clone(),
+            token: input.1,
+        }
+    }
+}
+
 impl ValueWithTok {
     pub fn expect_number(&self, msg: &str) -> Result<f64, RuntimeError> {
         match self.value {

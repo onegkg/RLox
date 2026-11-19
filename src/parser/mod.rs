@@ -9,7 +9,10 @@
 //!                  ;
 //! exprStmt        -> expression ";" ;
 //! printStmt       -> "print" expression ";" ;
-//! expression      -> equality
+//! expression      -> assignment ;
+//! assignment      -> IDENTIFIER "=" assignment
+//!                  | equality
+//!                  ;
 //! equality        -> comparison ( ( "!=" | "==" ) comparison )* ;
 //! comparison      -> term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 //! term            -> factor ( ( "-" | "+" ) factor )* ;
@@ -119,10 +122,11 @@ impl Parser {
     fn var_declaration(&mut self) -> Option<Stmt> {
         let name = self.expect_next_token(TokenType::Identifier, "Expected variable name.")?;
 
-        let mut initializer = None;
-        if self.consume_if_is(&[TokenType::Equal]) {
-            initializer = self.expression();
-        }
+        let initializer = if self.consume_if_is(&[TokenType::Equal]) {
+            self.expression()
+        } else {
+            None
+        };
 
         self.expect_next_token(
             TokenType::Semicolon,
@@ -152,7 +156,26 @@ impl Parser {
     }
 
     fn expression(&mut self) -> Option<Expr> {
-        self.equality()
+        self.assignment()
+    }
+
+    fn assignment(&mut self) -> Option<Expr> {
+        let expr = self.equality()?;
+        if self.consume_if_is(&[TokenType::Equal]) {
+            let equals = self.previous();
+            let value = self.assignment()?;
+
+            if let Expr::Variable { name } = expr {
+                return Some(Expr::Assignment {
+                    name,
+                    value: Box::from(value),
+                });
+            }
+
+            self.error(Some(equals), "Invalid assignment target.");
+        }
+
+        Some(expr)
     }
 
     fn equality(&mut self) -> Option<Expr> {
@@ -291,10 +314,10 @@ impl Parser {
         }
     }
 
-    fn error(&mut self, token: Option<Token>, msg: &str) {
+    fn error(&mut self, token: Option<Token>, msg: impl Into<String>) {
         self.errors.0.push(ParseError {
             token,
-            msg: String::from(msg),
+            msg: msg.into(),
         });
     }
 
